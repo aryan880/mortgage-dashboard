@@ -42,3 +42,16 @@ In a production version, I would add:
 ## Purpose
 
 This project was created as a business-facing full-stack prototype to demonstrate how a mortgage team could manage client intake, application statuses, follow-ups, and reporting in a more structured internal dashboard.
+
+## Full-Stack Flow
+
+This prototype includes a React frontend connected to a lightweight Express backend API.
+
+The API supports:
+
+- GET /api/clients
+- POST /api/clients
+- PATCH /api/clients/:id
+- DELETE /api/clients/:id
+
+The backend currently uses in-memory demo data. In production, this would be replaced with PostgreSQL or Supabase, authentication, role-based access, backend validation, audit logs, and secure deployment.
