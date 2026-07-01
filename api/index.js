@@ -1,43 +1,37 @@
 import express from "express";
 import cors from "cors";
+import { supabase } from "./supabaseClient.js";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/test", (req, res) => {
-  res.json({ message: "API is working on Vercel" });
-});
+app.get("/api/clients", async (req, res) => {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-let clients = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john@example.com",
-    phone: "604-123-4567",
-    mortgageType: "First-time buyer",
-    status: "New",
-    followUpDate: "2026-07-03",
-    notes: "Needs pre-approval follow-up"
-  },
-  {
-    id: 2,
-    name: "Sarah Lee",
-    email: "sarah@example.com",
-    phone: "778-555-2233",
-    mortgageType: "Refinance",
-    status: "In Review",
-    followUpDate: "2026-07-05",
-    notes: "Missing income documents"
+  if (error) {
+    return res.status(500).json({ message: error.message });
   }
-];
 
-app.get("/api/clients", (req, res) => {
-  res.json(clients);
-});
+  const formattedClients = data.map((client) => ({
+    id: client.id,
+    name: client.name,
+    email: client.email,
+    phone: client.phone,
+    mortgageType: client.mortgage_type,
+    status: client.status,
+    followUpDate: client.follow_up_date,
+    notes: client.notes
+  }));
 
-app.post("/api/clients", (req, res) => {
+  res.json(formattedClients);
+}); 
+
+app.post("/api/clients", async (req, res) => {
   const { name, email, phone, mortgageType, status, followUpDate, notes } = req.body;
 
   if (!name || !email || !phone) {
@@ -46,45 +40,86 @@ app.post("/api/clients", (req, res) => {
     });
   }
 
-  const newClient = {
-    id: Date.now(),
-    name,
-    email,
-    phone,
-    mortgageType,
-    status: status || "New",
-    followUpDate: followUpDate || "",
-    notes: notes || ""
-  };
+  const { data, error } = await supabase
+    .from("clients")
+    .insert([
+      {
+        name,
+        email,
+        phone,
+        mortgage_type: mortgageType,
+        status: status || "New",
+        follow_up_date: followUpDate || null,
+        notes: notes || ""
+      }
+    ])
+    .select()
+    .single();
 
-  clients.push(newClient);
-  res.status(201).json(newClient);
-});
-
-app.patch("/api/clients/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const clientIndex = clients.findIndex((client) => client.id === id);
-
-  if (clientIndex === -1) {
-    return res.status(404).json({
-      message: "Client not found."
-    });
+  if (error) {
+    return res.status(500).json({ message: error.message });
   }
 
-  clients[clientIndex] = {
-    ...clients[clientIndex],
-    ...req.body
-  };
-
-  res.json(clients[clientIndex]);
+  res.status(201).json({
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    mortgageType: data.mortgage_type,
+    status: data.status,
+    followUpDate: data.follow_up_date,
+    notes: data.notes
+  });
 });
 
-app.delete("/api/clients/:id", (req, res) => {
+app.patch("/api/clients/:id", async (req, res) => {
   const id = Number(req.params.id);
-  clients = clients.filter((client) => client.id !== id);
+
+  const updateData = {};
+
+  if (req.body.status !== undefined) updateData.status = req.body.status;
+  if (req.body.notes !== undefined) updateData.notes = req.body.notes;
+  if (req.body.followUpDate !== undefined) {
+    updateData.follow_up_date = req.body.followUpDate || null;
+  }
+
+  const { data, error } = await supabase
+    .from("clients")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    return res.status(500).json({ message: error.message });
+  }
 
   res.json({
-    message: "Client deleted from demo data."
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    mortgageType: data.mortgage_type,
+    status: data.status,
+    followUpDate: data.follow_up_date,
+    notes: data.notes
+  });
+});
+
+app.delete("/api/clients/:id", async (req, res) => {
+  const id = Number(req.params.id);
+
+  const { error } = await supabase
+    .from("clients")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return res.status(500).json({ message: error.message });
+  }
+
+  res.json({
+    message: "Client deleted from database."
   });
 });
 
