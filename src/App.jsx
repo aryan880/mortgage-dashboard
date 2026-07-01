@@ -1,38 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
-const initialClients = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john@example.com",
-    phone: "604-123-4567",
-    mortgageType: "First-time buyer",
-    status: "New",
-    notes: "Needs pre-approval follow-up"
-  },
-  {
-    id: 2,
-    name: "Sarah Lee",
-    email: "sarah@example.com",
-    phone: "778-555-2233",
-    mortgageType: "Refinance",
-    status: "In Review",
-    notes: "Missing income documents"
-  },
-  {
-    id: 3,
-    name: "Mike Patel",
-    email: "mike@example.com",
-    phone: "604-555-8899",
-    mortgageType: "Investment property",
-    status: "Approved",
-    notes: "Application approved"
-  }
-];
-
 function App() {
-  const [clients, setClients] = useState(initialClients);
+  const API_URL = "http://localhost:5001/api/clients";
+
+  const [clients, setClients] = useState([]);
   const [statusFilter, setStatusFilter] = useState("All");
   const [form, setForm] = useState({
     name: "",
@@ -45,30 +17,65 @@ function App() {
   })
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    async function fetchClients() {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        setClients(data);
+      } catch (error) {
+        console.error("Error loading clients:", error);
+      }
+    }
+
+    fetchClients();
+  }, []);
+
+
   const filteredClients =
     statusFilter === "All"
       ? clients
       : clients.filter((client) => client.status === statusFilter);
 
-  function updateStatus(id, newStatus) {
-    const updatedClients = clients.map((client) => {
-      if (client.id === id) {
-        return {
-          ...client,
-          status: newStatus
-        };
-      }
+  async function updateStatus(id, newStatus) {
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
 
-      return client;
-    });
+      const updatedClient = await response.json();
 
-    setClients(updatedClients);
+      const updatedClients = clients.map((client) => {
+        if (client.id === id) {
+          return updatedClient;
+        }
+
+        return client;
+      });
+
+      setClients(updatedClients);
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
   }
 
-  function deleteClient(id) {
-    const remainingClients = clients.filter((client) => client.id !== id);
-    setClients(remainingClients);
+  async function deleteClient(id) {
+    try {
+      await fetch(`${API_URL}/${id}`, {
+        method: "DELETE"
+      });
+
+      const remainingClients = clients.filter((client) => client.id !== id);
+      setClients(remainingClients);
+    } catch (error) {
+      console.error("Error deleting client:", error);
+    }
   }
+
 
   function handleChange(event) {
     setForm({
@@ -77,42 +84,53 @@ function App() {
     });
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
+    const missingFields = [];
+
     if (!form.name) {
-      setError("Client name is required.");
-      return;
+      missingFields.push("Client name");
     }
 
     if (!form.email) {
-      setError("Email is required.");
-      return;
+      missingFields.push("Email");
     }
 
     if (!form.phone) {
-      setError("Phone number is required.");
+      missingFields.push("Phone number");
+    }
+
+    if (missingFields.length > 0) {
+      alert(`Please enter: ${missingFields.join(", ")}`);
       return;
     }
 
-    const newClient = {
-      id: Date.now(),
-      ...form
-    };
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(form)
+      });
 
-    setClients([...clients, newClient]);
+      const newClient = await response.json();
 
-    setForm({
-      name: "",
-      email: "",
-      phone: "",
-      mortgageType: "",
-      status: "New",
-      followUpDate: "",
-      notes: ""
-    });
+      setClients([...clients, newClient]);
 
-    setError("");
+      setForm({
+        name: "",
+        email: "",
+        phone: "",
+        mortgageType: "",
+        status: "New",
+        followUpDate: "",
+        notes: ""
+      });
+    } catch (error) {
+      console.error("Error adding client:", error);
+    }
   }
 
   const totalClients = clients.length;
@@ -354,9 +372,9 @@ function App() {
       <section className="panel">
         <div className="panel-body">
           <p style={{ margin: 0, color: "#667085", fontSize: "14px" }}>
-            Prototype note: this version uses React state for demonstration.
-            In production, client records would be stored in a secure database and
-            managed through authenticated API routes with role-based access.
+            Prototype note: this version uses a React frontend connected to a lightweight Express API.
+            The demo API stores records in server memory. In production, client records would be stored
+            in a secure database and managed through authenticated API routes with role-based access.
           </p>
         </div>
       </section>
