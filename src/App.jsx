@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
-  const API_URL = "http://localhost:5001/api/clients";
+  const API_URL = "/api/clients";
 
   const [clients, setClients] = useState([]);
   const [statusFilter, setStatusFilter] = useState("All");
