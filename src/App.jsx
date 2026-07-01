@@ -97,15 +97,15 @@ function App() {
 
     const missingFields = [];
 
-    if (!form.name) {
+    if (!form.name.trim()) {
       missingFields.push("Client name");
     }
 
-    if (!form.email) {
+    if (!form.email.trim()) {
       missingFields.push("Email");
     }
 
-    if (!form.phone) {
+    if (!form.phone.trim()) {
       missingFields.push("Phone number");
     }
 
@@ -123,9 +123,15 @@ function App() {
         body: JSON.stringify(form)
       });
 
-      const newClient = await response.json();
+      const data = await response.json();
 
-      setClients([...clients, newClient]);
+      if (!response.ok) {
+        console.error("API error:", data);
+        alert(data.message || "Something went wrong while adding the client.");
+        return;
+      }
+
+      setClients([...clients, data]);
 
       setForm({
         name: "",
@@ -138,6 +144,7 @@ function App() {
       });
     } catch (error) {
       console.error("Error adding client:", error);
+      alert("Could not connect to the server.");
     }
   }
 
@@ -315,7 +322,7 @@ function App() {
                     <div className="client-card" key={client.id}>
                       <div className="client-card-header">
                         <div className="client-title">
-                          <h3>{client.name}</h3>
+                          <h3>{client.name || "Unnamed Client"}</h3>
                           <p>{client.mortgageType || "Mortgage application"}</p>
                         </div>
 
@@ -327,12 +334,12 @@ function App() {
                       <div className="info-grid">
                         <div className="info-item">
                           <span>Email</span>
-                          <strong>{client.email}</strong>
+                          <strong>{client.email || "Not provided"}</strong>
                         </div>
 
                         <div className="info-item">
                           <span>Phone</span>
-                          <strong>{client.phone}</strong>
+                          <strong>{client.phone || "Not provided"}</strong>
                         </div>
                       </div>
 
