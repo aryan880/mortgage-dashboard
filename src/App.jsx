@@ -21,10 +21,18 @@ function App() {
     async function fetchClients() {
       try {
         const response = await fetch(API_URL);
+
+        if (!response.ok) {
+          console.error("API error:", response.status);
+          setClients([]);
+          return;
+        }
+
         const data = await response.json();
         setClients(data);
       } catch (error) {
         console.error("Error loading clients:", error);
+        setClients([]);
       }
     }
 
