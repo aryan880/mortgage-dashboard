@@ -1,57 +1,85 @@
 # Mortgage Operations Dashboard
 
-A front-end prototype for a mortgage operations dashboard built with React and Vite.
+A full-stack internal-tool prototype for mortgage client intake and application workflow tracking. The React interface communicates with serverless API routes that persist records in Supabase PostgreSQL.
 
-This project models an internal business workflow for client intake, mortgage application tracking, status updates, follow-up dates, notes, and simple reporting.
+## What it does
 
-## Features
+- Creates client application records with required-field validation
+- Displays live summary counts for total, new, in-review, and approved applications
+- Filters the application pipeline by status
+- Updates an application's workflow status
+- Tracks mortgage type, follow-up date, and internal notes
+- Deletes records through the API
+- Presents the workflow in a responsive business-dashboard interface
 
-- New client intake form
-- Required field validation
-- Application status tracking
-- Status filtering
-- Dashboard summary metrics
-- Follow-up date tracking
-- Internal notes
-- Delete/archive-style admin action
-- Professional internal-tool UI
+## Architecture
 
-## Tech Stack
+```mermaid
+flowchart LR
+    U["React dashboard"] --> A["Serverless /api routes"]
+    A --> S["Supabase client"]
+    S --> P["PostgreSQL clients table"]
+```
 
-- React
-- JavaScript
-- Vite
-- CSS
-- Git / GitHub
+## Technology
 
-## Production Improvements
+| Layer | Tools |
+|---|---|
+| Frontend | React 19, JavaScript, Vite, CSS |
+| API | Vercel-style serverless functions |
+| Database | Supabase PostgreSQL |
+| Local tooling | npm, ESLint |
 
-This prototype currently uses React state, so data resets on refresh.
+## API routes
 
-In a production version, I would add:
+| Method | Route | Action |
+|---|---|---|
+| `GET` | `/api/clients` | List clients, newest first |
+| `POST` | `/api/clients` | Create a client |
+| `PATCH` | `/api/clients/:id` | Update status, notes, or follow-up date |
+| `DELETE` | `/api/clients/:id` | Delete a client |
 
-- Next.js API routes or server actions
-- PostgreSQL or Supabase database
-- Authentication
-- Role-based access
-- Backend validation
-- Status history / audit logs
-- Soft delete or archive instead of permanent deletion
-- Secure deployment using environment variables
+The API maps database snake_case fields to frontend-friendly camelCase responses.
 
-## Purpose
+## Run locally
 
-This project was created as a business-facing full-stack prototype to demonstrate how a mortgage team could manage client intake, application statuses, follow-ups, and reporting in a more structured internal dashboard.
+### Requirements
 
-## Full-Stack Flow
+- Node.js
+- A Supabase project with a `clients` table
+- Supabase project URL and anon key
 
-This prototype includes a React frontend connected to a lightweight Express backend API.
+```bash
+git clone https://github.com/aryan880/mortgage-dashboard.git
+cd mortgage-dashboard
+npm install
+```
 
-The API supports:
+Create `.env.local`:
 
-- GET /api/clients
-- POST /api/clients
-- PATCH /api/clients/:id
-- DELETE /api/clients/:id
+```bash
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+```
 
-The backend currently uses in-memory demo data. In production, this would be replaced with PostgreSQL or Supabase, authentication, role-based access, backend validation, audit logs, and secure deployment.
+Run the frontend and serverless routes together with the Vercel CLI:
+
+```bash
+npx vercel dev
+```
+
+For frontend-only development, use `npm run dev`; CRUD operations still require the API routes.
+
+## Scope and security
+
+This is a portfolio prototype, not a production mortgage system. It does not yet include authentication, authorization, audit logging, soft deletion, or production-grade handling of sensitive personal data. Use only fictional test data.
+
+## What this project demonstrates
+
+- Translating a business workflow into an internal-tool UI
+- React state, effects, forms, filtering, and API integration
+- Serverless CRUD endpoints backed by PostgreSQL
+- Consistent data mapping between UI and database models
+- Honest identification of production-readiness gaps
+
+Built by [Aryan Sawhney](https://github.com/aryan880).
